@@ -34,6 +34,14 @@ export default function App() {
     return evaluateAtRedshift(z, params, curves[idx]?.fs8);
   }, [z, params, curves]);
 
+  // Keep 2D likelihood contours & MCMC traces synchronized in real time when parameters change
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setBenchmarkResult(runMcmcBenchmark(params));
+    }, 100);
+    return () => window.clearTimeout(timer);
+  }, [params]);
+
   // Smooth cosmic expansion playback from early universe (z=3) toward present (z=0)
   useEffect(() => {
     if (!isPlaying) return;
@@ -247,6 +255,7 @@ export default function App() {
                 ...prev,
                 branch: prev.branch === 'lcdm' ? 'basic' : prev.branch,
                 zTrans: Number(suggested.zTrans.toFixed(2)),
+                w0: Number(suggested.w0.toFixed(2)),
                 H0: Number(suggested.H0.toFixed(2)),
                 OmegaM0: Number(suggested.OmegaM0.toFixed(3)),
                 alphaT: Number(suggested.alphaT.toFixed(2)),

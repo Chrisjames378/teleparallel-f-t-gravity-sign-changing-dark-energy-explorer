@@ -12,6 +12,7 @@ export type ModelBranch = 'basic' | 'extended' | 'lcdm';
 export interface CosmologyParams {
   branch: ModelBranch;
   zTrans: number; // Redshift of sign transition (0.60 - 2.50)
+  w0: number; // Present dark energy equation of state baseline (-1.40 to -0.60)
   H0: number; // km/s/Mpc (65.0 - 78.0)
   OmegaM0: number; // Matter density parameter (0.22 - 0.36)
   alphaT: number; // Torsion transition steepness (0.10 - 2.50)
@@ -116,6 +117,7 @@ export function getDefaultParams(branch: ModelBranch = 'basic'): CosmologyParams
     return {
       branch: 'lcdm',
       zTrans: 1.5,
+      w0: -1.0,
       H0: 67.8,
       OmegaM0: 0.312,
       alphaT: 0.0,
@@ -127,6 +129,7 @@ export function getDefaultParams(branch: ModelBranch = 'basic'): CosmologyParams
     return {
       branch: 'extended',
       zTrans: 1.55,
+      w0: -1.02,
       H0: 73.2,
       OmegaM0: 0.296,
       alphaT: 1.35,
@@ -137,6 +140,7 @@ export function getDefaultParams(branch: ModelBranch = 'basic'): CosmologyParams
   return {
     branch: 'basic',
     zTrans: 1.5,
+    w0: -1.0,
     H0: 72.8,
     OmegaM0: 0.298,
     alphaT: 1.4,
@@ -157,8 +161,13 @@ function sech2(x: number): number {
 
 export function computeOmegaDEAndDeriv(z: number, params: CosmologyParams): { omegaDE: number; dOmegaDEdz: number } {
   const omegaDE0 = 1 - params.OmegaM0 - OMEGA_R0;
+  const opz = 1 + z;
+  const expW = 3 * (1 + params.w0);
+  const g = Math.abs(expW) < 1e-6 ? 1 : Math.pow(opz, expW);
+  const dgdz = Math.abs(expW) < 1e-6 ? 0 : expW * Math.pow(opz, expW - 1);
+
   if (params.branch === 'lcdm' || params.alphaT < 0.01) {
-    return { omegaDE: omegaDE0, dOmegaDEdz: 0 };
+    return { omegaDE: omegaDE0 * g, dOmegaDEdz: omegaDE0 * dgdz };
   }
 
   const beta = params.branch === 'extended' ? params.betaLambda : 0;
@@ -168,8 +177,11 @@ export function computeOmegaDEAndDeriv(z: number, params: CosmologyParams): { om
   const ratio = tanhSafe(arg) / safeNorm;
   const dRatioDz = (-params.alphaT * sech2(arg)) / safeNorm;
 
-  const omegaDE = omegaDE0 * ((1 - beta) * ratio + beta);
-  const dOmegaDEdz = omegaDE0 * (1 - beta) * dRatioDz;
+  const s = (1 - beta) * ratio + beta;
+  const dsdz = (1 - beta) * dRatioDz;
+
+  const omegaDE = omegaDE0 * g * s;
+  const dOmegaDEdz = omegaDE0 * (dgdz * s + g * dsdz);
   return { omegaDE, dOmegaDEdz };
 }
 
@@ -220,6 +232,7 @@ export function computeDistanceModulus(z: number, params: CosmologyParams): numb
 const FIDUCIAL_PARAMS: CosmologyParams = {
   branch: 'lcdm',
   zTrans: 1.5,
+  w0: -1.0,
   H0: FIDUCIAL_PLANCK_LCDM.H0,
   OmegaM0: FIDUCIAL_PLANCK_LCDM.OmegaM0,
   alphaT: 0,
@@ -311,16 +324,14 @@ export function evaluateAtRedshift(z: number, params: CosmologyParams, growthFs8
   const H = params.H0 * E;
   const H_1pz = H / (1 + z);
 
-  let wDE: number | null = -1;
+  let wDE: number | null = params.w0;
   let isPole = false;
-  if (params.branch !== 'lcdm' && params.alphaT >= 0.01) {
-    if (Math.abs(omegaDE) < 0.015) {
-      wDE = null;
-      isPole = true;
-    } else {
-      const rawW = -1 + ((1 + z) / (3 * omegaDE)) * dOmegaDEdz;
-      wDE = Math.max(-6, Math.min(4, rawW));
-    }
+  if (Math.abs(omegaDE) < 0.015 && params.branch !== 'lcdm' && params.alphaT >= 0.01) {
+    wDE = null;
+    isPole = true;
+  } else if (Math.abs(omegaDE) >= 1e-6) {
+    const rawW = -1 + ((1 + z) / (3 * omegaDE)) * dOmegaDEdz;
+    wDE = Math.max(-6, Math.min(4, rawW));
   }
 
   const q = -1 + ((1 + z) / (2 * E2)) * dE2dz;
@@ -484,6 +495,7 @@ export function autoFitBestChi2(current: CosmologyParams): CosmologyParams {
 
   const bounds = {
     zTrans: [0.65, 2.45],
+    w0: [-1.35, -0.65],
     H0: [65.5, 77.5],
     OmegaM0: [0.23, 0.355],
     alphaT: [0.2, 2.45],
@@ -497,11 +509,12 @@ export function autoFitBestChi2(current: CosmologyParams): CosmologyParams {
     current.branch === 'lcdm'
       ? ['H0', 'OmegaM0', 'sigma80']
       : current.branch === 'basic'
-        ? ['zTrans', 'H0', 'OmegaM0', 'alphaT', 'sigma80']
-        : ['zTrans', 'H0', 'OmegaM0', 'alphaT', 'betaLambda', 'sigma80'];
+        ? ['zTrans', 'w0', 'H0', 'OmegaM0', 'alphaT', 'sigma80']
+        : ['zTrans', 'w0', 'H0', 'OmegaM0', 'alphaT', 'betaLambda', 'sigma80'];
 
   const initialSteps: Record<keyof typeof bounds, number> = {
     zTrans: 0.16,
+    w0: 0.06,
     H0: 1.0,
     OmegaM0: 0.014,
     alphaT: 0.2,
@@ -530,6 +543,7 @@ export function autoFitBestChi2(current: CosmologyParams): CosmologyParams {
   return {
     ...best,
     zTrans: Number(best.zTrans.toFixed(2)),
+    w0: Number(best.w0.toFixed(2)),
     H0: Number(best.H0.toFixed(2)),
     OmegaM0: Number(best.OmegaM0.toFixed(3)),
     alphaT: Number(best.alphaT.toFixed(2)),

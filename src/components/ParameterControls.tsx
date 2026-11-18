@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import type { CosmologyParams } from '../physics/cosmology';
 
@@ -37,6 +37,15 @@ const SliderRow: React.FC<SliderRowProps> = ({
   description,
   onChange,
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [draft, setDraft] = useState(value.toFixed(decimals));
+
+  useEffect(() => {
+    if (!isFocused) {
+      setDraft(value.toFixed(decimals));
+    }
+  }, [value, decimals, isFocused]);
+
   return (
     <div className={`space-y-1.5 ${disabled ? 'opacity-45' : ''}`}>
       <div className="flex items-center justify-between gap-2">
@@ -52,11 +61,28 @@ const SliderRow: React.FC<SliderRowProps> = ({
             max={max}
             step={step}
             disabled={disabled}
-            value={Number(value.toFixed(decimals))}
-            onChange={(e) => {
-              const parsed = parseFloat(e.target.value);
+            value={isFocused ? draft : value.toFixed(decimals)}
+            onFocus={() => {
+              setIsFocused(true);
+              setDraft(value.toFixed(decimals));
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              const parsed = parseFloat(draft);
               if (!Number.isNaN(parsed)) {
-                onChange(Math.max(min, Math.min(max, parsed)));
+                const clamped = Math.max(min, Math.min(max, parsed));
+                onChange(clamped);
+                setDraft(clamped.toFixed(decimals));
+              } else {
+                setDraft(value.toFixed(decimals));
+              }
+            }}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setDraft(raw);
+              const parsed = parseFloat(raw);
+              if (!Number.isNaN(parsed) && parsed >= min && parsed <= max) {
+                onChange(parsed);
               }
             }}
             className="w-20 rounded bg-[#07090E] border border-slate-700 px-2 py-0.5 text-right text-slate-100 focus:outline-none focus:border-cyan-500"
@@ -97,7 +123,7 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
             Teleparallel <span className="font-mono text-cyan-400">f(T)</span> Model Parameters
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Adjust torsion transition dynamics and cosmological priors in real time.
+            Real-time controls — changes propagate immediately to all charts, telemetry, and 3D manifold.
           </p>
         </div>
 
@@ -124,6 +150,19 @@ export const ParameterControls: React.FC<ParameterControlsProps> = ({
           disabled={isLcdm}
           description="Epoch where effective dark energy crosses zero (ρ_DE = 0)."
           onChange={(zTrans) => onChangeParams({ ...params, zTrans })}
+        />
+
+        <SliderRow
+          id="param-w0"
+          label="Dark Energy Equation of State"
+          symbol="w_DE (w₀)"
+          value={params.w0}
+          min={-1.4}
+          max={-0.6}
+          step={0.01}
+          decimals={2}
+          description="Present-day dark energy EoS baseline (-1.00 = pure cosmological constant; < -1 phantom, > -1 quintessence)."
+          onChange={(w0) => onChangeParams({ ...params, w0 })}
         />
 
         <SliderRow

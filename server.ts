@@ -24,6 +24,7 @@ interface CosmologySnapshot {
   branch: string;
   z: number;
   zTrans: number;
+  w0: number;
   H0: number;
   OmegaM0: number;
   alphaT: number;
@@ -54,6 +55,7 @@ function buildCosmologyContextPrompt(snapshot: CosmologySnapshot): string {
     `- Active Branch: ${branchLabel}`,
     `- Redshift Epoch: z = ${snapshot.z.toFixed(2)}`,
     `- Transition Redshift: z_trans = ${snapshot.zTrans.toFixed(2)}`,
+    `- Present Dark Energy EoS Baseline: w0 = ${snapshot.w0.toFixed(2)}`,
     `- Hubble Constant: H0 = ${snapshot.H0.toFixed(2)} km/s/Mpc`,
     `- Matter Density: Omega_m0 = ${snapshot.OmegaM0.toFixed(4)}`,
     `- Torsion Coupling Steepness: alpha_T = ${snapshot.alphaT.toFixed(2)}`,
@@ -219,12 +221,13 @@ async function startServer() {
               type: Type.OBJECT,
               properties: {
                 zTrans: { type: Type.NUMBER },
+                w0: { type: Type.NUMBER },
                 H0: { type: Type.NUMBER },
                 OmegaM0: { type: Type.NUMBER },
                 alphaT: { type: Type.NUMBER },
                 betaLambda: { type: Type.NUMBER },
               },
-              required: ['zTrans', 'H0', 'OmegaM0', 'alphaT', 'betaLambda'],
+              required: ['zTrans', 'w0', 'H0', 'OmegaM0', 'alphaT', 'betaLambda'],
             },
           },
           required: ['verdict', 'tensionSummary', 'suggestedParams'],

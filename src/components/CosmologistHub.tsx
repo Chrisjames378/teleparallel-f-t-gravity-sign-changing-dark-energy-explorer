@@ -9,6 +9,7 @@ interface CosmologistHubProps {
   chi2: Chi2Breakdown;
   onApplySuggestedParams: (suggested: {
     zTrans: number;
+    w0: number;
     H0: number;
     OmegaM0: number;
     alphaT: number;
@@ -28,6 +29,7 @@ interface StructuredAnalysis {
   tensionSummary: string;
   suggestedParams: {
     zTrans: number;
+    w0: number;
     H0: number;
     OmegaM0: number;
     alphaT: number;
@@ -61,6 +63,7 @@ export const CosmologistHub: React.FC<CosmologistHubProps> = ({
     branch: params.branch,
     z: epoch.z,
     zTrans: params.zTrans,
+    w0: params.w0,
     H0: params.H0,
     OmegaM0: params.OmegaM0,
     alphaT: params.alphaT,
@@ -233,8 +236,9 @@ export const CosmologistHub: React.FC<CosmologistHubProps> = ({
           <p className="text-slate-200 leading-relaxed">{analysis.verdict}</p>
           <p className="text-slate-400 leading-relaxed">{analysis.tensionSummary}</p>
           <div className="pt-1 font-mono tabular-nums text-[11px] text-slate-400">
-            z_trans={analysis.suggestedParams.zTrans.toFixed(2)} · H₀={analysis.suggestedParams.H0.toFixed(2)} · Ω_m0=
-            {analysis.suggestedParams.OmegaM0.toFixed(3)} · α_T={analysis.suggestedParams.alphaT.toFixed(2)}
+            z_trans={analysis.suggestedParams.zTrans.toFixed(2)} · w₀={analysis.suggestedParams.w0.toFixed(2)} · H₀=
+            {analysis.suggestedParams.H0.toFixed(2)} · Ω_m0={analysis.suggestedParams.OmegaM0.toFixed(3)} · α_T=
+            {analysis.suggestedParams.alphaT.toFixed(2)}
           </div>
         </div>
       )}

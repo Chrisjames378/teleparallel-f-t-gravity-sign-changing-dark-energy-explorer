@@ -159,6 +159,17 @@ export const ScienceCharts: React.FC<ScienceChartsProps> = ({
         .attr('stroke', '#06B6D4')
         .attr('stroke-width', 2.4)
         .attr('d', mainLine);
+
+      if (params.branch !== 'lcdm') {
+        g.append('line')
+          .attr('x1', xScale(params.zTrans))
+          .attr('x2', xScale(params.zTrans))
+          .attr('y1', 0)
+          .attr('y2', innerH)
+          .attr('stroke', '#F43F5E')
+          .attr('stroke-dasharray', '3,3')
+          .attr('stroke-opacity', 0.8);
+      }
     } else if (chart1Tab === 'eos') {
       const eosLine = d3
         .line<CosmologyCurvePoint>()

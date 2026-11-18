@@ -308,7 +308,8 @@ export const TorsionViewport3D: React.FC<TorsionViewport3DProps> = ({ epoch, par
 
       // Scale factor expansion visual range (0.55 at z=3 to 1.25 at z=0)
       const comovingScale = 0.55 + 0.7 * curEpoch.a;
-      const torsionStrength = Math.min(2.2, Math.abs(curEpoch.fTRatio) * 2.2 + 0.25);
+      const eosMod = 1 + Math.max(-0.45, Math.min(0.65, -1 - curParams.w0));
+      const torsionStrength = Math.min(2.4, (Math.abs(curEpoch.fTRatio) * 2.2 + 0.25) * eosMod);
       const signPolarity = curEpoch.OmegaDE < -0.005 ? -1 : 1;
 
       // Deform spacetime torsion sheet vertices & colors
@@ -572,9 +573,19 @@ export const TorsionViewport3D: React.FC<TorsionViewport3DProps> = ({ epoch, par
           <span className="mx-2 text-slate-600">·</span>
           <span>T(z) = {epoch.T.toFixed(0)}</span>
           <span className="mx-2 text-slate-600">·</span>
+          <span>
+            w_DE = {epoch.isPole || epoch.wDE === null ? 'Pole' : epoch.wDE.toFixed(2)}
+          </span>
+          <span className="mx-2 text-slate-600">·</span>
           <span className={epoch.OmegaDE < 0 ? 'text-rose-400' : 'text-cyan-400'}>
             f(T)/6H² = {epoch.fTRatio.toFixed(3)}
           </span>
+          {params.branch !== 'lcdm' && (
+            <>
+              <span className="mx-2 text-slate-600">·</span>
+              <span className="text-amber-400">z_trans = {params.zTrans.toFixed(2)}</span>
+            </>
+          )}
         </div>
 
         {/* Collapsible Bottom Control Dock (Zero Viewport Occlusion) */}
