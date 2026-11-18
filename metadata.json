@@ -1,0 +1,8 @@
+{
+  "name": "Teleparallel f(T) Gravity & Sign-Changing Dark Energy Explorer",
+  "description": "Interactive observational cosmology workstation for teleparallel f(T) gravity, sign-changing dark energy, 3D spacetime torsion visualization, Bayesian MCMC benchmarks, and Gemini Interactions API analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
