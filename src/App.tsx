@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BarChart3, Download, Zap } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import {
   autoFitBestChi2,
   computeCosmologyCurves,
@@ -275,6 +276,7 @@ export default function App() {
           }
         }}
       />
+      <Analytics />
     </div>
   );
 }
